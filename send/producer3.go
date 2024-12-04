@@ -22,34 +22,34 @@ func main() {
 	}
 	defer ch.Close()
 
-	// Declare a queue
-	queueName := "queue_task_3"
-	q, err := ch.QueueDeclare(
-		queueName, // Queue name
-		true,      // Durable
-		false,     // Delete when unused
-		false,     // Exclusive
-		false,     // No-wait
-		nil,       // Arguments
+	// declare  fanout exchange
+	exchangeName := "fanout_exchange"
+	//queueName := "queue_task_3"
+	err = ch.ExchangeDeclare(
+		exchangeName, // Exchange name
+		"fanout",     // Exchange type
+		true,         // Durable
+		false,        // Auto-deleted
+		false,        // Internal
+		false,        // No-wait
+		nil,          // Arguments
 	)
 	if err != nil {
 		log.Fatal("Failed to declare a queue:", err)
 	}
-	log.Println(q)
 
 	// Send a message to the queue
-	body := "Hello task queue 3!"
+	body := "Hello to all queues via fanout exchange!"
 	err = ch.Publish(
-		"",     // Default exchange
-		q.Name, // Routing key (queue name)
-		false,  // Mandatory
-		false,  // Immediate
+		exchangeName, // Fanout exchange name
+		"",           // Routing key (ignored for fanout)
+		false,        // Mandatory
+		false,        // Immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        []byte(body),
 		},
 	)
-	log.Println(q.Name)
 	if err != nil {
 		log.Fatal("Failed to publish a message:", err)
 	}
