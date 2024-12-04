@@ -22,36 +22,36 @@ func main() {
 	}
 	defer ch.Close()
 
-	// Declare a queue
-	queueName := "queue_task_1"
-	q, err := ch.QueueDeclare(
-		queueName, // Queue name
-		true,      // Durable
-		false,     // Delete when unused
-		false,     // Exclusive
-		false,     // No-wait
-		nil,       // Arguments
+	// Declare the direct exchange
+	exchangeName := "direct_logs"
+	err = ch.ExchangeDeclare(
+		exchangeName, // name
+		"direct",     // type
+		true,         // durable
+		false,        // auto-deleted
+		false,        // internal
+		false,        // no-wait
+		nil,          // arguments
 	)
 	if err != nil {
 		log.Fatal("Failed to declare a queue:", err)
 	}
-	log.Println(q)
+	//log.Println(q)
 
-	// Send a message to the queue
-	body := "Hello task queue 1"
+	// Publish error logs
+	message := "queue log from Producer 1"
 	err = ch.Publish(
-		"",     // Default exchange
-		q.Name, // Routing key (queue name)
-		false,  // Mandatory
-		false,  // Immediate
+		exchangeName, // exchange
+		"queue1key",  // routing key
+		false,        // mandatory
+		false,        // immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body:        []byte(body),
+			Body:        []byte(message),
 		},
 	)
-	log.Println(q.Name)
 	if err != nil {
 		log.Fatal("Failed to publish a message:", err)
 	}
-	fmt.Println("Sent:", body)
+	fmt.Println("Producer 1 sent:", message)
 }

@@ -22,6 +22,20 @@ func main() {
 	}
 	defer ch.Close()
 
+	// Declare the exchange
+	exchangeName := "direct_logs"
+	err = ch.ExchangeDeclare(
+		exchangeName,
+		"direct",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatal("Failed to declare an exchange:", err)
+	}
 	// Declare a queue
 	queueName := "queue_task_3"
 	q, err := ch.QueueDeclare(
@@ -34,6 +48,18 @@ func main() {
 	)
 	if err != nil {
 		log.Fatal("Failed to declare a queue:", err)
+	}
+
+	// Bind the queue to the exchange with the routing key
+	err = ch.QueueBind(
+		q.Name,
+		"queue3key",
+		exchangeName,
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatal("Failed to bind queue:", err)
 	}
 
 	// Consume messages

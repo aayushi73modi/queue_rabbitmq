@@ -1,57 +1,73 @@
-// package main
+package main
 
-// import (
-// 	"fmt"
-// 	"log"
+import (
+	"fmt"
+	"log"
 
-// 	"github.com/streadway/amqp"
-// )
+	"github.com/streadway/amqp"
+)
 
-// func main() {
-// 	// Connect to RabbitMQ server
-// 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5673/")
-// 	if err != nil {
-// 		log.Fatal("Failed to connect to RabbitMQ:", err)
-// 	}
-// 	defer conn.Close()
+func main() {
+	// Connect to RabbitMQ server
+	conn, err := amqp.Dial("amqp://guest:guest@localhost:5673/")
+	if err != nil {
+		log.Fatal("Failed to connect to RabbitMQ:", err)
+	}
+	defer conn.Close()
 
-// 	// Open a channel
-// 	ch, err := conn.Channel()
-// 	if err != nil {
-// 		log.Fatal("Failed to open a channel:", err)
-// 	}
-// 	defer ch.Close()
+	// Create a channel
+	ch, err := conn.Channel()
+	if err != nil {
+		log.Fatal("Failed to open a channel:", err)
+	}
+	defer ch.Close()
 
-// 	// Declare a queue
-// 	queueName := "queue_task_2"
-// 	q, err := ch.QueueDeclare(
-// 		queueName, // Queue name
-// 		true,      // Durable
-// 		false,     // Delete when unused
-// 		false,     // Exclusive
-// 		false,     // No-wait
-// 		nil,       // Arguments
-// 	)
-// 	if err != nil {
-// 		log.Fatal("Failed to declare a queue:", err)
-// 	}
-// 	log.Println(q)
+	// Declare the direct exchange
+	exchangeName := "direct_logs"
+	err = ch.ExchangeDeclare(
+		exchangeName, // name
+		"direct",     // type
+		true,         // durable
+		false,        // auto-deleted
+		false,        // internal
+		false,        // no-wait
+		nil,          // arguments
+	)
+	if err != nil {
+		log.Fatal("Failed to declare an exchange:", err)
+	}
 
-// 	// Send a message to the queue
-// 	body := "Hello task queue 2!"
-// 	err = ch.Publish(
-// 		"",     // Default exchange
-// 		q.Name, // Routing key (queue name)
-// 		false,  // Mandatory
-// 		false,  // Immediate
-// 		amqp.Publishing{
-// 			ContentType: "text/plain",
-// 			Body:        []byte(body),
-// 		},
-// 	)
-// 	log.Println(q.Name)
-// 	if err != nil {
-// 		log.Fatal("Failed to publish a message:", err)
-// 	}
-// 	fmt.Println("Sent:", body)
-// }
+	// Publish info logs
+	infoMessage := "queue log from Producer 2"
+	err = ch.Publish(
+		exchangeName, // exchange
+		"info",       // routing key
+		false,        // mandatory
+		false,        // immediate
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        []byte(infoMessage),
+		},
+	)
+	if err != nil {
+		log.Fatal("Failed to publish a message:", err)
+	}
+	fmt.Println("Producer 2 sent:", infoMessage)
+
+	// Publish warning logs
+	warningMessage := "Warning log from Producer 2"
+	err = ch.Publish(
+		exchangeName, // exchange
+		"queue2key",  // routing key
+		false,        // mandatory
+		false,        // immediate
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        []byte(warningMessage),
+		},
+	)
+	if err != nil {
+		log.Fatal("Failed to publish a message:", err)
+	}
+	fmt.Println("Producer 2 sent:", warningMessage)
+}
