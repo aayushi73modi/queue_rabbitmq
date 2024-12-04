@@ -22,36 +22,40 @@ func main() {
 	}
 	defer ch.Close()
 
-	// Declare the direct exchange
-	exchangeName := "topic_logs"
+	// Declare the topic exchange
 	err = ch.ExchangeDeclare(
-		exchangeName, // name
-		"topic",      // type
-		true,         // durable
-		false,        // auto-deleted
-		false,        // internal
-		false,        // no-wait
-		nil,          // arguments
+		"topic_logs", // Exchange name
+		"topic",      // Exchange type
+		true,         // Durable
+		false,        // Auto-deleted
+		false,        // Internal
+		false,        // No-wait
+		nil,          // Arguments
 	)
 	if err != nil {
-		log.Fatal("Failed to declare a queue:", err)
+		log.Fatal("Failed to declare an exchange:", err)
 	}
-	//log.Println(q)
 
-	// Publish error logs
-	message := "queue log from Producer 4"
-	err = ch.Publish(
-		exchangeName,     // exchange
-		"logs.queue4key", // routing key
-		false,            // mandatory
-		false,            // immediate
-		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(message),
-		},
-	)
-	if err != nil {
-		log.Fatal("Failed to publish a message:", err)
+	// Publishing messages with different routing keys
+	messages := map[string]string{
+		"logs.info":  "Info log message",
+		"logs.debug": "Debug log message",
 	}
-	fmt.Println("Producer 4 sent:", message)
+
+	for key, message := range messages {
+		err = ch.Publish(
+			"topic_logs", // Exchange name
+			key,          // Routing key
+			false,        // Mandatory
+			false,        // Immediate
+			amqp.Publishing{
+				ContentType: "text/plain",
+				Body:        []byte(message),
+			},
+		)
+		if err != nil {
+			log.Fatal("Failed to publish a message:", err)
+		}
+		fmt.Printf("Sent: %s with key: %s\n", message, key)
+	}
 }

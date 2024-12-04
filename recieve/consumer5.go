@@ -9,7 +9,7 @@ import (
 
 func main() {
 	// Connect to RabbitMQ server
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	conn, err := amqp.Dial("amqp://guest:guest@localhost:5673/")
 	if err != nil {
 		log.Fatal("Failed to connect to RabbitMQ:", err)
 	}
@@ -22,50 +22,51 @@ func main() {
 	}
 	defer ch.Close()
 
-	// Declare the topic exchange
+	// Declare the exchange
+	exchangeName := "topic_logs"
 	err = ch.ExchangeDeclare(
-		"topic_logs", // Exchange name
-		"topic",      // Exchange type
-		true,         // Durable
-		false,        // Auto-deleted
-		false,        // Internal
-		false,        // No-wait
-		nil,          // Arguments
+		exchangeName,
+		"topic",
+		true,
+		false,
+		false,
+		false,
+		nil,
 	)
 	if err != nil {
 		log.Fatal("Failed to declare an exchange:", err)
 	}
-
 	// Declare a queue
+	queueName := "queue_task_5"
 	q, err := ch.QueueDeclare(
-		"",    // Auto-generated queue name
-		false, // Durable
-		false, // Delete when unused
-		true,  // Exclusive
-		false, // No-wait
-		nil,   // Arguments
+		queueName, // Queue name
+		true,      // Durable
+		false,     // Delete when unused
+		false,     // Exclusive
+		false,     // No-wait
+		nil,       // Arguments
 	)
 	if err != nil {
 		log.Fatal("Failed to declare a queue:", err)
 	}
 
-	// Bind the queue to the routing key 'logs.error'
+	// Bind the queue to the exchange with the routing key
 	err = ch.QueueBind(
-		q.Name,       // Queue name
-		"logs.error", // Binding key
-		"topic_logs", // Exchange name
-		false,        // No-wait
-		nil,          // Arguments
+		q.Name,
+		"logs.debug",
+		exchangeName,
+		false,
+		nil,
 	)
 	if err != nil {
-		log.Fatal("Failed to bind a queue:", err)
+		log.Fatal("Failed to bind queue:", err)
 	}
 
-	// Start receiving messages
+	// Consume messages
 	msgs, err := ch.Consume(
 		q.Name, // Queue name
 		"",     // Consumer tag
-		true,   // Auto-acknowledge
+		true,   // Auto-ack
 		false,  // Exclusive
 		false,  // No-local
 		false,  // No-wait
@@ -75,8 +76,9 @@ func main() {
 		log.Fatal("Failed to register a consumer:", err)
 	}
 
-	fmt.Println("Consumer 4 waiting for error messages...")
+	// Process messages
+	fmt.Println("Consumer 5 is waiting for messages...")
 	for msg := range msgs {
-		fmt.Printf("Consumer 4 received: %s\n", msg.Body)
+		fmt.Printf("Consumer 5 received: %s\n", msg.Body)
 	}
 }
