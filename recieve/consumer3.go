@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	// Connect to RabbitMQ server
+	// Connect to RabbitMQ
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5673/")
 	if err != nil {
 		log.Fatal("Failed to connect to RabbitMQ:", err)
@@ -22,19 +22,33 @@ func main() {
 	}
 	defer ch.Close()
 
-	// Declare a queue (must match the producer's queue declaration)
+	// Declare a queue (this is done by the consumer)
+	name := "queue_task_1"
 	q, err := ch.QueueDeclare(
-		"queue_task_3", // Queue name
-		true,           // Durable
-		false,          // Delete when unused
-		false,          // Exclusive
-		false,          // No-wait
-		nil,            // Arguments
+		name,  // Queue name (can be unique for each consumer)
+		true,  // Durable
+		false, // Delete when unused
+		false, // Exclusive
+		false, // No-wait
+		nil,   // Arguments
 	)
 	if err != nil {
-		log.Fatal("Failed to declare a queue:", err)
+		log.Fatal("Failed to declare queue:", err)
 	}
-	// Start receiving messages from the queue
+
+	// Bind the queue to the exchange
+	err = ch.QueueBind(
+		q.Name,            // Queue name
+		"",                // Routing key (not used in fanout)
+		"fanout_exchange", // Exchange name
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatal("Failed to bind queue:", err)
+	}
+
+	// Start receiving messages
 	msgs, err := ch.Consume(
 		q.Name, // Queue name
 		"",     // Consumer tag
@@ -44,12 +58,11 @@ func main() {
 		false,  // No-wait
 		nil,    // Arguments
 	)
-
 	if err != nil {
 		log.Fatal("Failed to register a consumer:", err)
 	}
 
-	// Print the messages as they arrive
+	// Handle messages
 	for msg := range msgs {
 		fmt.Printf("Received: %s\n", msg.Body)
 	}
