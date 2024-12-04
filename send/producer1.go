@@ -38,7 +38,7 @@ func main() {
 	log.Println(q)
 
 	// Send a message to the queue
-	body := "Hello task queue! And 1 Producers and 2 consumers"
+	body := "Hello task queue 1"
 	err = ch.Publish(
 		"",     // Default exchange
 		q.Name, // Routing key (queue name)

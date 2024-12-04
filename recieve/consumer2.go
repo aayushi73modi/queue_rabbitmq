@@ -22,35 +22,37 @@ func main() {
 	}
 	defer ch.Close()
 
-	// Declare a queue (must match the producer's queue declaration)
+	// Declare a queue
+	queueName := "queue_task_2"
 	q, err := ch.QueueDeclare(
-		"queue_task_2", // Queue name
-		true,           // Durable
-		false,          // Delete when unused
-		false,          // Exclusive
-		false,          // No-wait
-		nil,            // Arguments
+		queueName, // Queue name
+		true,      // Durable
+		false,     // Delete when unused
+		false,     // Exclusive
+		false,     // No-wait
+		nil,       // Arguments
 	)
 	if err != nil {
 		log.Fatal("Failed to declare a queue:", err)
 	}
-	// Start receiving messages from the queue
+
+	// Consume messages
 	msgs, err := ch.Consume(
 		q.Name, // Queue name
 		"",     // Consumer tag
-		true,   // Auto-acknowledge
+		true,   // Auto-ack
 		false,  // Exclusive
 		false,  // No-local
 		false,  // No-wait
 		nil,    // Arguments
 	)
-
 	if err != nil {
 		log.Fatal("Failed to register a consumer:", err)
 	}
 
-	// Print the messages as they arrive
+	// Process messages
+	fmt.Println("Consumer 2 is waiting for messages...")
 	for msg := range msgs {
-		fmt.Printf("Received: %s\n", msg.Body)
+		fmt.Printf("Consumer 2 received: %s\n", msg.Body)
 	}
 }
